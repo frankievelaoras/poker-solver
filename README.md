@@ -1,3 +1,3 @@
 # poker-solver
 
-# this is nico
+# this is Frank
