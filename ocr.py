@@ -37,8 +37,13 @@ class OCR:
     def extract_pot_value(self, text_list):
         for text in text_list:
             text = text.replace(",", "").strip()
-            if text.replace(".", "").isdigit():
-                return text
+            parts = text.split()
+            for part in parts:
+                try:
+                    float_val = float(part)
+                    return part
+                except ValueError:
+                    continue
         return None
 
     def detect_suit_from_region(self, region):
@@ -66,17 +71,23 @@ class OCR:
         return []
 
     def extract_hero_cards(self):
-        values = self.extract_text(self.capture_screen(HERO_CARDS_REGION))
-        valid = []
-        seen = set()
-        for v in values:
-            v = v.strip()
-            if v == "0":
-                v = "Q"
-            if v in ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"] and v not in seen:
-                valid.append(v)
-                seen.add(v)
-        return valid[:2]
+        def extract_card(region):
+            text = self.extract_text(self.capture_screen(region))
+            for val in text:
+                val = val.strip()
+                if val == '0': val = 'Q'
+                if val in ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"]:
+                    return val
+            return None
+
+        card1 = extract_card(HERO_CARD_1)
+        card2 = extract_card(HERO_CARD_2)
+        suit1 = self.detect_suit_from_region(SUIT_HERO_1) if card1 else ""
+        suit2 = self.detect_suit_from_region(SUIT_HERO_2) if card2 else ""
+        cards = []
+        if card1: cards.append(f"{card1}{suit1}")
+        if card2: cards.append(f"{card2}{suit2}")
+        return cards
 
     def extract_bankrolls(self):
         return {
@@ -116,7 +127,6 @@ class OCR:
         def color_distance(c1, c2):
             return np.sqrt(np.sum((np.array(c1) - np.array(c2)) ** 2))
 
-        # Identify dealer position by closest color match
         distances = {}
         for player, region in positions_regions.items():
             img = self.capture_screen(region, color=True)
@@ -131,7 +141,7 @@ class OCR:
         rotated = player_order[dealer_index:] + player_order[:dealer_index]
         assigned = {}
         for i, player in enumerate(rotated):
-            label = ["BTN", "SB", "BB", "UTG", "MP", "CO", "HJ"][i % 7]
+            label = position_labels[i % 7]
             assigned[player] = label
         return assigned
 
@@ -171,7 +181,7 @@ class OCR:
             "Player 7": self.extract_single_value(BET_AMOUNT_7),
         }
 
-    def parse_text(self, pot_text, hero_cards_text):
+    def parse_text(self, pot_text):
         pot_size = self.extract_pot_value(pot_text)
         board_regions = [BOARD_CARD_1, BOARD_CARD_2, BOARD_CARD_3, BOARD_CARD_4, BOARD_CARD_5]
         suit_regions = [SUIT_CARD_1, SUIT_CARD_2, SUIT_CARD_3, SUIT_CARD_4, SUIT_CARD_5]
@@ -220,10 +230,7 @@ class OCR:
             pot_img = self.capture_screen(POT_REGION)
             pot_text = self.extract_text(pot_img)
 
-            hero_img = self.capture_screen(HERO_CARDS_REGION)
-            hero_text = self.extract_text(hero_img)
-
-            self.parse_text(pot_text, hero_text)
+            self.parse_text(pot_text)
             self.display_game_state()
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
