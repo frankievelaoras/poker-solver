@@ -11,9 +11,15 @@ BOARD_CARD_3 = (396, 304, 457, 350)
 BOARD_CARD_4 = (463, 304, 522, 350)
 BOARD_CARD_5 = (531, 304, 588, 350)
 
-# Hero cards region
+# Hero card Regions
 HERO_CARDS_REGION = (365, 465, 479, 517)
+HERO_CARD_1 = (374, 469, 396, 499)
+HERO_CARD_2 = (419, 468, 439, 497)
 
+# Suit Hero card regions
+SUIT_HERO_1 = (397, 472, 410, 484)
+SUIT_HERO_2 = (460, 478, 472, 494)
+  
 # Suit detection regions for each board card
 SUIT_CARD_1 = (293, 269, 325, 280)
 SUIT_CARD_2 = (364, 269, 388, 280)
